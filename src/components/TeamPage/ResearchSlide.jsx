@@ -110,10 +110,10 @@ export default function ResearchSlide({ isActive }) {
           borderTop: '1px solid rgba(79,143,255,0.07)', marginTop: 36,
         }}>
           <div style={{ fontFamily: "'Syne',sans-serif", fontSize: 13, fontWeight: 800, color: 'rgba(232,234,246,0.4)', letterSpacing: '0.06em' }}>
-            Stellar<span style={{ color: 'rgba(79,143,255,0.55)' }}>Labs</span>
+            <span style={{ color: 'rgba(79,143,255,0.55)' }}>Astral</span>
           </div>
           <div style={{ fontSize: 11, color: 'rgba(123,130,168,0.3)' }}>
-            © 2025 Stellar Labs Inc. All rights reserved.
+            © 2026 Astral. All rights reserved.
           </div>
           <div style={{ display: 'flex', gap: 18 }}>
             {['Terms', 'Privacy', 'Contact', 'Status'].map(l => (
