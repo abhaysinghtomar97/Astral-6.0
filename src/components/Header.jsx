@@ -115,12 +115,11 @@ const Header = memo(function Header({ chapter }) {
         padding: "clamp(20px,3vw,40px) clamp(24px,4vw,60px)",
         display: "flex", justifyContent: "space-between", alignItems: "flex-start",
         zIndex: 20, pointerEvents: "none",
-        background: "linear-gradient(to bottom,rgba(1,8,18,.82),rgba(1,8,18,.3) 55%,transparent)",
+        background: "linear-gradient(rgb(65 85 112 / 82%), rgba(1, 8, 18, 0.3) 55%, transparent"
       }}
     >
       {/* ── Left: Wordmark ── */}
       <div style={{ pointerEvents: "auto" }}>
-        <Magnetic strength={0.15}>
           <div data-hover data-cursor-label="HOME">
             <RevealLine visible={mounted} delay={0.2}>
               <div style={{ fontSize: "clamp(18px,2vw,24px)", fontFamily: F.display, fontWeight: 300, color: C.text, letterSpacing: ".2em" }}>
@@ -132,27 +131,28 @@ const Header = memo(function Header({ chapter }) {
                 Orbital Risk Intelligence
               </div>
             </RevealLine>
+        <Magnetic strength={0.5}>
             <CurvedString accent={ch.accent} mounted={mounted} />
-          </div>
         </Magnetic>
+          </div>
       </div>
 
       {/* ── Center: Nav Links ── */}
       <nav style={{
-        display: "flex", alignItems: "center", gap: "clamp(16px,2vw,32px)",
-        pointerEvents: "auto", alignSelf: "center",
+        display: "flex", alignItems: "center", gap: "10vw",
+        pointerEvents: "auto", alignSelf: "center"
       }}>
-        {[{ label: "Team", to: "/team" }, { label: "ML Model", to: "/console" }].map(({ label, to }) => (
+        {[{ label: "Team", to: "/team" }, { label: "Console", to: "/console" }].map(({ label, to }) => (
           <RevealLine key={to} visible={mounted} delay={0.45}>
             <Link
               to={to}
               data-hover
               style={{
+                
                 color: C.text,
                 fontFamily: F.mono,
-                fontSize: "clamp(8px,.8vw,11px)",
-                letterSpacing: ".35em",
-                textTransform: "uppercase",
+                fontSize: "clamp(18px,.8vw,11px)",
+                letterSpacing: ".2em",
                 textDecoration: "none",
                 padding: "6px 0",
                 position: "relative",
@@ -185,7 +185,7 @@ const Header = memo(function Header({ chapter }) {
 
       {/* ── Right: Status ── */}
       <div style={{ textAlign: "right", fontFamily: F.mono, pointerEvents: "auto" }}>
-        <Magnetic strength={0.1}>
+        
           <div data-hover>
             <RevealLine visible={mounted} delay={0.4}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "flex-end", marginBottom: 6 }}>
@@ -195,18 +195,14 @@ const Header = memo(function Header({ chapter }) {
                   boxShadow: `0 0 10px ${ch.accent}`,
                   animation: "statusPulse 2s ease-in-out infinite",
                 }} />
-                <span style={{ color: ch.accent, fontSize: "clamp(8px,.8vw,11px)", letterSpacing: ".3em", transition: "color .6s" }}>
+                <span style={{ color: ch.accent, fontSize: "clamp(8px,.8vw,11px)", letterSpacing: ".3em", transition: "color .6s", maxWidth:"80px" }}>
                   {STATUS_LABEL[chapter]}
                 </span>
               </div>
             </RevealLine>
-            <RevealLine visible={mounted} delay={0.55}>
-              <div style={{ color: C.textMicro, fontSize: "clamp(7px,.65vw,9px)", letterSpacing: ".25em" }}>
-                LEO TRACKING ACTIVE
-              </div>
-            </RevealLine>
+            
           </div>
-        </Magnetic>
+        
       </div>
     </header>
   );

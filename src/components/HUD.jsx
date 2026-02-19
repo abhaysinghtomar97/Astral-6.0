@@ -55,7 +55,7 @@ export function ChapterOverlay({ chapter }) {
           transition: "color .5s, text-shadow .5s",
         }}>
           {ch.tag}
-          <span style={{ color: C.textMicro, fontWeight: 400 }}> ── ASTRAL</span>
+          
         </div>
       </RevealLine>
 
@@ -136,22 +136,7 @@ export const ProgressBar = memo(function ProgressBar({ progress, chapter }) {
         transition: "opacity 1s ease .8s, transform 1s cubic-bezier(.19,1,.22,1) .8s",
       }}
     >
-      {/* Rotated phase tag */}
-      <div style={{
-        color: ch.accent,
-        fontSize: 7,
-        letterSpacing: ".25em",
-        fontFamily: F.mono,
-        writingMode: "vertical-rl",
-        textOrientation: "mixed",
-        transform: "rotate(180deg)",
-        marginBottom: 8,
-        textShadow: `0 0 12px ${ch.accent}`,
-        transition: "color .5s, text-shadow .5s",
-        opacity: .75,
-      }}>
-        {ch.tag}
-      </div>
+      
 
       {/* Track + fill */}
       <div style={{ width: 1.5, height: 160, background: C.dim06, borderRadius: 2, position: "relative" }}>
@@ -262,7 +247,7 @@ export function ScrollHint({ progress }) {
         fontFamily: F.mono,
       }}
     >
-      <div style={{ color: C.textDim, fontSize: 8, letterSpacing: ".5em" }}>SCROLL TO EXPLORE</div>
+      <div style={{ color: C.textDim, fontSize: 8, letterSpacing: ".5em" }}></div>
       {/* Mouse icon */}
       <div style={{
         width: 18, height: 30,
@@ -309,7 +294,7 @@ export function CameraMode({ scrolling }) {
         textOrientation: "mixed",
         transform: "rotate(180deg)",
       }}>
-        FREE CAMERA ── DRAG TO ORBIT
+       
       </div>
     </div>
   );

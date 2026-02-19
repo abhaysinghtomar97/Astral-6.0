@@ -66,20 +66,20 @@ export const ATMO = [
 export const CHAPTERS = [
   {
     tag: "PHASE 00",
-    title: "Normal\nOrbit",
-    body: "4 satellites trace clean paths above Earth. The orbital shell is peaceful, organized — a marvel of human engineering stretching across low Earth orbit.",
+    title: "Normal Orbit",
+    // body: "4 satellites trace clean paths above Earth. The orbital shell is peaceful, organized  a marvel of human engineering stretching across low Earth orbit.",
     accent: "#4a90e2",
   },
   {
     tag: "PHASE 01",
     title: "Orbital\nCongestion",
-    body: "Over 9,000 active satellites now share orbital space. The shell grows dense — a crowded highway with no traffic control, no lanes, no margin for error.",
+    body: "Over 9,000 active satellites now share orbital space. The shell grows dense  a crowded highway with no traffic control, no lanes, no margin for error.",
     accent: "#ff8800",
   },
   {
     tag: "PHASE 02",
     title: "Active\nSatellites",
-    body: "Among thousands of objects, only a fraction remain operational. These critical assets — communications, navigation, weather — sustain modern civilization.",
+    body: "Among thousands of objects, only a fraction remain operational. These critical assets  communications, navigation, weather sustain modern civilization.",
     accent: "#00ffc8",
   },
   {
