@@ -56,11 +56,11 @@ export const ORBIT_DEFS = [
 
 // Atmosphere layers
 export const ATMO = [
-  { name: "Troposphere",  r: 1.008, color: "#4488cc", op: 0.05,  rim: 2.0 },
-  { name: "Stratosphere", r: 1.022, color: "#5599dd", op: 0.045, rim: 2.4 },
-  { name: "Mesosphere",   r: 1.038, color: "#6688cc", op: 0.038, rim: 2.8 },
-  { name: "Thermosphere", r: 1.058, color: "#4477bb", op: 0.030, rim: 3.4 },
-  { name: "Exosphere",    r: 1.085, color: "#3366aa", op: 0.022, rim: 4.2 },
+  { name: "Troposphere",  r: 0.808, color: "#4488cc", op: 0.155,  rim: 2.0 },
+  { name: "Stratosphere", r: 0.905, color: "#5599dd", op: 0.095, rim: 2.4 },
+  { name: "Mesosphere",   r: 1.025, color: "#6688cc", op: 0.100, rim: 2.8 },
+  { name: "Thermosphere", r: 1.105, color: "#4477bb", op: 0.120, rim: 3.4 },
+  { name: "Exosphere",    r: 1.205, color: "#3366aa", op: 0.140, rim: 4.2 },
 ];
 
 export const CHAPTERS = [

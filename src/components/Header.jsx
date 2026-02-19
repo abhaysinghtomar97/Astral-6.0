@@ -128,7 +128,7 @@ const Header = memo(function Header({ chapter }) {
               </div>
             </RevealLine>
             <RevealLine visible={mounted} delay={0.35}>
-              <div style={{ fontSize: "clamp(7px,.7vw,9px)", letterSpacing: ".45em", color: C.textDim, fontFamily: F.mono, textTransform: "uppercase", marginTop: 2 }}>
+              <div style={{ fontSize: "clamp(7px,.7vw,9px)", letterSpacing: ".45em", color: C.text, fontFamily: F.mono, textTransform: "uppercase", marginTop: 2 }}>
                 Orbital Risk Intelligence
               </div>
             </RevealLine>

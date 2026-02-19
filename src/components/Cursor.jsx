@@ -35,15 +35,15 @@ const Cursor = memo(function Cursor({ chapter, scrolling }) {
     let raf;
     const tick = () => {
       // Dot follows fast
-      dotPos.current.x  += (pos.current.x - dotPos.current.x)  * 0.2;
-      dotPos.current.y  += (pos.current.y - dotPos.current.y)  * 0.2;
+      dotPos.current.x  += (pos.current.x - dotPos.current.x)  * 1;
+      dotPos.current.y  += (pos.current.y - dotPos.current.y)  * 1;
 
       // Ring follows slower — igloo.inc lag effect
-      ringPos.current.x += (pos.current.x - ringPos.current.x) * 0.08;
-      ringPos.current.y += (pos.current.y - ringPos.current.y) * 0.08;
+      ringPos.current.x += (pos.current.x - ringPos.current.x) * 0.1;
+      ringPos.current.y += (pos.current.y - ringPos.current.y) * 0.1;
 
       // Spring scale
-      const target = hovering.current ? 3.2 : scrolling ? 0.5 : 1;
+      const target = hovering.current ? 3 : scrolling ? 0.5 : 1;
       const s = spring(scale.current.v, target, scale.current.vel, 0.06, 0.72);
       scale.current = { v: s.value, vel: s.velocity };
 
