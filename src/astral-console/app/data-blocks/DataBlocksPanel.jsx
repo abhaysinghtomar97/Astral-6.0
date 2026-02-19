@@ -1,36 +1,41 @@
-import React, { useMemo } from 'react';
-import { MetricCard } from './MetricCard';
+import React, { useState, useEffect, memo } from 'react';
 import { useTelemetryStore } from '../store/telemetryStore';
 
-function riskStatus(risk) {
-  if (risk == null) return 'info';
-  if (risk >= 0.7) return 'crit';
-  if (risk >= 0.4) return 'warn';
-  return 'ok';
-}
+// ── MetricCard ───────────────────────────────────────────────────────────────
+const MetricCard = memo(function MetricCard({ label, value, unit, status = 'info', sub }) {
+  const colors = {
+    info: { border: '#374151', value: '#c9d1d9', dot: '#c9d1d9' },
+    ok:   { border: '#15803d', value: '#22c55e', dot: '#22c55e' },
+    warn: { border: '#92400e', value: '#f59e0b', dot: '#f59e0b' },
+    crit: { border: '#991b1b', value: '#ef4444', dot: '#ef4444' },
+  }[status] ?? { border: '#374151', value: '#c9d1d9', dot: '#c9d1d9' };
 
-function distanceStatus(km) {
-  if (km == null) return 'info';
-  if (km < 1) return 'crit';
-  if (km < 5) return 'warn';
-  return 'ok';
-}
+  return (
+    <div style={{ borderLeft: `2px solid ${colors.border}`, padding: '4px 10px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+        <div style={{
+          width: 6, height: 6, borderRadius: '50%', background: colors.dot, flexShrink: 0,
+          animation: status === 'crit' ? 'ac-pulse 1s infinite' : 'none',
+        }} />
+        <span className="ac-metric-label">{label}</span>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+        <span className="ac-metric-value" style={{ color: colors.value }}>
+          {value ?? '—'}
+        </span>
+        {unit && <span className="ac-metric-unit">{unit}</span>}
+      </div>
+      {sub && <div className="ac-metric-sub">{sub}</div>}
+    </div>
+  );
+});
 
-function confidenceStatus(c) {
-  if (c == null) return 'info';
-  if (c >= 0.85) return 'ok';
-  if (c >= 0.6) return 'warn';
-  return 'crit';
-}
-
-function fmtPct(v) {
-  return v != null ? (v * 100).toFixed(1) + '%' : null;
-}
-
-function fmtKm(v) {
-  return v != null ? v.toFixed(2) : null;
-}
-
+// ── DataBlocksPanel ──────────────────────────────────────────────────────────
+function riskStatus(r)  { return r == null ? 'info' : r >= 0.7 ? 'crit' : r >= 0.4 ? 'warn' : 'ok'; }
+function distStatus(d)  { return d == null ? 'info' : d < 1    ? 'crit' : d < 5    ? 'warn' : 'ok'; }
+function confStatus(c)  { return c == null ? 'info' : c >= 0.85? 'ok'   : c >= 0.6 ? 'warn' : 'crit'; }
+function fmtPct(v)      { return v != null ? (v * 100).toFixed(1) + '%' : null; }
+function fmtKm(v)       { return v != null ? v.toFixed(2) : null; }
 function fmtTca(v) {
   if (v == null) return null;
   const m = Math.floor(v);
@@ -38,65 +43,39 @@ function fmtTca(v) {
   return `${m}m ${s}s`;
 }
 
-/**
- * DataBlocksPanel
- * Right panel — shows derived intelligence from the latest telemetry snapshot.
- * Each MetricCard is memoized; this panel only re-renders when the store changes.
- */
 export function DataBlocksPanel() {
   const { metrics, lastUpdated } = useTelemetryStore();
+  const [secAgo, setSecAgo] = useState(null);
 
-  const updatedLabel = useMemo(() => {
-    if (!lastUpdated) return null;
-    const diff = Math.round((Date.now() - new Date(lastUpdated).getTime()) / 1000);
-    return `updated ${diff}s ago`;
+  useEffect(() => {
+    if (!lastUpdated) return;
+    const id = setInterval(() => {
+      setSecAgo(Math.round((Date.now() - new Date(lastUpdated).getTime()) / 1000));
+    }, 1000);
+    return () => clearInterval(id);
   }, [lastUpdated]);
 
   return (
-    <div className="flex flex-col h-full border border-slate-700 rounded-sm overflow-hidden">
-      {/* Panel header */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-slate-700 bg-slate-900 shrink-0">
-        <span className="text-slate-400 text-xs font-mono tracking-widest uppercase">
-          Derived Intelligence
-        </span>
-        {updatedLabel && (
-          <span className="text-[10px] font-mono text-slate-600">{updatedLabel}</span>
+    <div className="ac-panel">
+      <div className="ac-panel-header">
+        <span className="ac-panel-title">Derived Intelligence</span>
+        {secAgo != null && (
+          <span style={{ fontSize: 10, color: '#4b5563' }}>updated {secAgo}s ago</span>
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 bg-[#0a0d12]">
+      <div className="ac-metrics-body">
         {!metrics ? (
-          <p className="text-xs font-mono text-slate-600 mt-2">Awaiting telemetry…</p>
+          <div className="ac-no-data">Awaiting telemetry…</div>
         ) : (
-          <div className="grid grid-cols-1 gap-4">
-            <MetricCard
-              label="Mission ID"
-              value={metrics.missionId}
-              status="info"
-            />
-            <MetricCard
-              label="Collision Probability"
-              value={fmtPct(metrics.collisionRisk)}
-              status={riskStatus(metrics.collisionRisk)}
-              sub={metrics.collisionRisk >= 0.7 ? '⚠ MANEUVER WINDOW ACTIVE' : undefined}
-            />
-            <MetricCard
-              label="Min Distance"
-              value={fmtKm(metrics.distanceKm)}
-              unit="km"
-              status={distanceStatus(metrics.distanceKm)}
-            />
-            <MetricCard
-              label="Time to Closest Approach"
-              value={fmtTca(metrics.tca)}
-              status={metrics.tca != null && metrics.tca < 10 ? 'crit' : 'info'}
-            />
-            <MetricCard
-              label="ML Confidence Score"
-              value={fmtPct(metrics.mlConfidence)}
-              status={confidenceStatus(metrics.mlConfidence)}
-            />
-          </div>
+          <>
+            <MetricCard label="Mission ID"              value={metrics.missionId}              status="info" />
+            <MetricCard label="Collision Probability"   value={fmtPct(metrics.collisionRisk)}  status={riskStatus(metrics.collisionRisk)}
+                        sub={metrics.collisionRisk >= 0.7 ? '⚠ MANEUVER WINDOW ACTIVE' : null} />
+            <MetricCard label="Min Distance"            value={fmtKm(metrics.distanceKm)}      unit="km"  status={distStatus(metrics.distanceKm)} />
+            <MetricCard label="Time to Closest Approach" value={fmtTca(metrics.tca)}           status={metrics.tca != null && metrics.tca < 10 ? 'crit' : 'info'} />
+            <MetricCard label="ML Confidence Score"     value={fmtPct(metrics.mlConfidence)}   status={confStatus(metrics.mlConfidence)} />
+          </>
         )}
       </div>
     </div>
