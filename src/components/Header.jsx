@@ -142,7 +142,7 @@ const Header = memo(function Header({ chapter }) {
         display: "flex", alignItems: "center", gap: "clamp(16px,2vw,32px)",
         pointerEvents: "auto", alignSelf: "center",
       }}>
-        {[{ label: "Team", to: "/team" }, { label: "ML Model", to: "/ml-model" }].map(({ label, to }) => (
+        {[{ label: "Team", to: "/team" }, { label: "ML Model", to: "/console" }].map(({ label, to }) => (
           <RevealLine key={to} visible={mounted} delay={0.45}>
             <Link
               to={to}

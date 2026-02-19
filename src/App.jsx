@@ -27,7 +27,8 @@ import { Loader, Vignettes, Grain } from "./components/Overlays.jsx";
 
 // Pages
 import TeamPage from "./components/TeamPage/index.js";
-import NotFound from "./components/NotFound.jsx";
+
+import AstralConsole from "./astral-console/app/AstralConsole.jsx";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // MAIN SCENE (extracted so Router can wrap it)
@@ -107,7 +108,7 @@ export default function Astral() {
       <Routes>
         <Route path="/" element={<AstralScene />} />
         <Route path="/team" element={<TeamPage />} />
-        <Route path="/ml-model" element={<NotFound/>} />
+        <Route path="/console" element={<AstralConsole/>} />
       </Routes>
     </BrowserRouter>
   );
