@@ -37,6 +37,7 @@ const GLOBAL_CSS = `
     background: ${T.bg};
     color: ${T.text};
     font-family: ${T.mono};
+    
   }
 
   /* ── Top bar ── */
@@ -283,7 +284,7 @@ export function AstralConsoleLayout() {
   }, []);
 
   return (
-    <div className="astral-console">
+    <div className="astral-console" style={{ position: 'fixed', inset: 0 }}>
       {/* Top bar */}
       <header className="ac-topbar">
         <div className="ac-wordmark">
