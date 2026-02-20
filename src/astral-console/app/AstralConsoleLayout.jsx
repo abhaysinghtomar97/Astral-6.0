@@ -326,7 +326,7 @@ export function AstralConsoleLayout() {
   }, [restoreSession]);
 
   // Show nothing while checking session (avoids login flash for valid sessions)
-  if (status === 'loading' || status === 'idle') {
+  if (status === 'loading') {
     return (
       <div style={{
         position: 'fixed', inset: 0, background: '#080b10',
@@ -340,8 +340,8 @@ export function AstralConsoleLayout() {
   }
 
   if (status !== 'authenticated') {
-    return <LoginScreen />;
-  }
+  return <LoginScreen />;                          // covers idle + unauthenticated + error
+}
 
   return <ConsoleView />;
 }

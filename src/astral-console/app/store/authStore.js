@@ -2,21 +2,11 @@ import { create } from 'zustand';
 
 const API_BASE = import.meta.env.VITE_ASTRAL_API ?? 'https://api.example.com/astral';
 
-/**
- * authStore
- *
- * Token is kept in memory only (never localStorage/sessionStorage).
- * The backend should use httpOnly cookies for the real token; this store
- * tracks the *session state* so the UI knows who is logged in.
- *
- * On page refresh the user will need to re-authenticate — this is intentional
- * for an operational console where stale sessions are a security risk.
- */
 export const useAuthStore = create((set, get) => ({
-  user:    null,   // { id, name, email, role }
-  token:   null,   // in-memory only — never written to localStorage
-  status:  'idle', // idle | loading | authenticated | error
-  error:   null,
+  user:   null,
+  token:  null,
+  status: 'idle',  // idle | loading | authenticated | unauthenticated | error
+  error:  null,
 
   // ── Login ──────────────────────────────────────────────────────────────────
   login: async (email, password) => {
@@ -24,16 +14,15 @@ export const useAuthStore = create((set, get) => ({
     try {
       const res = await fetch(`${API_BASE}/login`, {
         method:      'POST',
-        credentials: 'include',           // send/receive httpOnly cookies
+        credentials: 'include',
         headers:     { 'Content-Type': 'application/json' },
         body:        JSON.stringify({ email, password }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body.message ?? `Login failed: HTTP ${res.status}`);
+        throw new Error(body.detail ?? `Login failed: HTTP ${res.status}`);
       }
       const data = await res.json();
-      // Backend returns { token, user: { id, name, email, role } }
       set({ token: data.token, user: data.user, status: 'authenticated', error: null });
       return { ok: true };
     } catch (err) {
@@ -42,7 +31,12 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
-  // ── Restore session (call on app mount) ───────────────────────────────────
+  // ── Called after successful registration (auto-login) ─────────────────────
+  setUserFromRegister: (token, user) => {
+    set({ token, user, status: 'authenticated', error: null });
+  },
+
+  // ── Restore session on app mount ──────────────────────────────────────────
   restoreSession: async () => {
     set({ status: 'loading' });
     try {
@@ -54,7 +48,8 @@ export const useAuthStore = create((set, get) => ({
       const data = await res.json();
       set({ user: data.user, token: data.token ?? null, status: 'authenticated' });
     } catch {
-      set({ user: null, token: null, status: 'idle' });
+      // ← 'unauthenticated' (not 'idle') so AstralConsoleLayout shows LoginScreen
+      set({ user: null, token: null, status: 'unauthenticated' });
     }
   },
 
@@ -63,9 +58,7 @@ export const useAuthStore = create((set, get) => ({
     try {
       await fetch(`${API_BASE}/logout`, { method: 'POST', credentials: 'include' });
     } catch { /* best-effort */ }
-    // Wipe everything from memory
-    set({ user: null, token: null, status: 'idle', error: null });
-    // Clear sensitive data signal — other stores listen for this
+    set({ user: null, token: null, status: 'unauthenticated', error: null });
     window.dispatchEvent(new CustomEvent('astral:logout'));
   },
 
