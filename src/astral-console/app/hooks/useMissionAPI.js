@@ -1,12 +1,14 @@
 import { useCallback, useRef } from 'react';
-import { useMissionStore } from '../store/missionStore';
+import { useMissionStore }   from '../store/missionStore';
 import { useTelemetryStore } from '../store/telemetryStore';
-import { usePolling } from './usePolling';
+import { useAuthStore }      from '../store/authStore';
+import { useHistoryStore }   from '../store/historyStore';
+import { usePolling }        from './usePolling';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SET THIS TO false ONCE YOUR REAL BACKEND IS READY
-// While true, the console runs on simulated data — no backend needed.
-// ─────────────────────────────────────────────────────────────────────────────
+const API_BASE = import.meta.env.VITE_ASTRAL_API ?? 'https://api.example.com/astral';
+
+// ─── MOCK FLAG ────────────────────────────────────────────────────────────────
+// Set to false when your real backend is ready.
 const USE_MOCK = true;
 
 const MOCK_LOGS = [
@@ -24,10 +26,11 @@ const MOCK_LOGS = [
   ['Radar track updated. Range rate: -0.34 km/s', 'INFO'],
 ];
 
-function generateMockPayload(missionId) {
+function generateMockPayload(missionId, userId) {
   const [log, severity] = MOCK_LOGS[Math.floor(Math.random() * MOCK_LOGS.length)];
   return {
     timestamp: new Date().toISOString(),
+    userId,
     missionId,
     log,
     severity,
@@ -39,74 +42,97 @@ function generateMockPayload(missionId) {
     },
   };
 }
+// ─────────────────────────────────────────────────────────────────────────────
 
-const API_BASE = import.meta.env.VITE_ASTRAL_API ?? 'https://api.example.com/astral';
-
+/**
+ * useMissionAPI
+ *
+ * Polls the backend for the latest telemetry event for the active mission.
+ * Dispatches log events to the terminal via CustomEvent (zero React state).
+ * Updates the telemetry store with structured metrics.
+ *
+ * Polling stops automatically when:
+ *   - user is not authenticated
+ *   - no active mission is selected
+ *   - the component unmounts
+ *
+ * On history replay, polling continues in background but terminal shows replay.
+ */
 export function useMissionAPI() {
-  const { activeMission } = useMissionStore();
+  const { activeMission }              = useMissionStore();
   const { setMetrics, setLastUpdated } = useTelemetryStore();
+  const { user, getAuthHeader, isAuthenticated } = useAuthStore();
+  const { selectedEntry }              = useHistoryStore();
 
   const lastTimestampRef = useRef(null);
+  const isReplayingRef   = useRef(false);
+
+  // Track when replay is active so we don't overwrite terminal with live data
+  isReplayingRef.current = !!selectedEntry;
 
   const poll = useCallback(async () => {
     if (!activeMission) return;
+    if (!isAuthenticated()) return;
 
     try {
       let data;
 
       if (USE_MOCK) {
-        await new Promise(r => setTimeout(r, 80)); // simulate latency
-        data = generateMockPayload(activeMission);
+        await new Promise(r => setTimeout(r, 80));
+        data = generateMockPayload(activeMission, user?.id ?? 'USR-00');
       } else {
         const res = await fetch(
           `${API_BASE}/missions/${activeMission}/telemetry/latest`,
-          { signal: AbortSignal.timeout(4000) }
+          {
+            credentials: 'include',
+            headers:     { ...getAuthHeader() },
+            signal:      AbortSignal.timeout(4000),
+          }
         );
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         data = await res.json();
       }
 
-      // --- De-dupe: skip if we've already processed this timestamp ---
+      // De-dupe by timestamp
       if (data.timestamp === lastTimestampRef.current) return;
       lastTimestampRef.current = data.timestamp;
 
-      // --- Push log entry to terminal via custom event (no React state) ---
-      window.dispatchEvent(
-        new CustomEvent('astral:log', {
-          detail: {
-            timestamp: data.timestamp,
-            message: data.log,
-            severity: data.severity ?? 'INFO',
-          },
-        })
-      );
-
-      // --- Update metric store (small object, triggers targeted renders) ---
-      if (data.metrics) {
+      // Always update metrics store (DataBlocks shows live unless in replay)
+      if (data.metrics && !isReplayingRef.current) {
         setMetrics({
-          missionId: data.missionId,
-          distanceKm: data.metrics.distance_km,
+          missionId:     data.missionId,
+          distanceKm:    data.metrics.distance_km,
           collisionRisk: data.metrics.collision_risk,
-          mlConfidence: data.metrics.ml_confidence,
-          tca: data.metrics.tca_minutes ?? null,
+          mlConfidence:  data.metrics.ml_confidence,
+          tca:           data.metrics.tca_minutes ?? null,
         });
         setLastUpdated(data.timestamp);
       }
+
+      // Only push to terminal if NOT replaying history
+      if (!isReplayingRef.current) {
+        window.dispatchEvent(new CustomEvent('astral:log', {
+          detail: {
+            timestamp: data.timestamp,
+            message:   data.log,
+            severity:  data.severity ?? 'INFO',
+          },
+        }));
+      }
+
     } catch (err) {
-      // Surface connectivity failures to the terminal
       if (err.name !== 'AbortError') {
-        window.dispatchEvent(
-          new CustomEvent('astral:log', {
-            detail: {
-              timestamp: new Date().toISOString(),
-              message: `[API ERROR] ${err.message}`,
-              severity: 'WARNING',
-            },
-          })
-        );
+        window.dispatchEvent(new CustomEvent('astral:log', {
+          detail: {
+            timestamp: new Date().toISOString(),
+            message:   `[API ERROR] ${err.message}`,
+            severity:  'WARNING',
+          },
+        }));
       }
     }
-  }, [activeMission, setMetrics, setLastUpdated]);
+  }, [activeMission, user, isAuthenticated, getAuthHeader, setMetrics, setLastUpdated]);
 
-  usePolling(poll, 2000, !!activeMission);
+  // Polling only runs when authenticated + mission selected
+  usePolling(poll, 2000, !!activeMission && isAuthenticated());
 }

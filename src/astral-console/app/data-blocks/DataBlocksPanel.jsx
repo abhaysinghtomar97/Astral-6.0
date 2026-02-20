@@ -1,7 +1,7 @@
 import React, { useState, useEffect, memo } from 'react';
 import { useTelemetryStore } from '../store/telemetryStore';
 
-// ── MetricCard ───────────────────────────────────────────────────────────────
+// ── MetricCard ────────────────────────────────────────────────────────────────
 const MetricCard = memo(function MetricCard({ label, value, unit, status = 'info', sub }) {
   const colors = {
     info: { border: '#374151', value: '#c9d1d9', dot: '#c9d1d9' },
@@ -20,9 +20,7 @@ const MetricCard = memo(function MetricCard({ label, value, unit, status = 'info
         <span className="ac-metric-label">{label}</span>
       </div>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
-        <span className="ac-metric-value" style={{ color: colors.value }}>
-          {value ?? '—'}
-        </span>
+        <span className="ac-metric-value" style={{ color: colors.value }}>{value ?? '—'}</span>
         {unit && <span className="ac-metric-unit">{unit}</span>}
       </div>
       {sub && <div className="ac-metric-sub">{sub}</div>}
@@ -30,21 +28,21 @@ const MetricCard = memo(function MetricCard({ label, value, unit, status = 'info
   );
 });
 
-// ── DataBlocksPanel ──────────────────────────────────────────────────────────
-function riskStatus(r)  { return r == null ? 'info' : r >= 0.7 ? 'crit' : r >= 0.4 ? 'warn' : 'ok'; }
-function distStatus(d)  { return d == null ? 'info' : d < 1    ? 'crit' : d < 5    ? 'warn' : 'ok'; }
-function confStatus(c)  { return c == null ? 'info' : c >= 0.85? 'ok'   : c >= 0.6 ? 'warn' : 'crit'; }
-function fmtPct(v)      { return v != null ? (v * 100).toFixed(1) + '%' : null; }
-function fmtKm(v)       { return v != null ? v.toFixed(2) : null; }
-function fmtTca(v) {
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const riskStatus = (r) => r == null ? 'info' : r >= 0.7 ? 'crit' : r >= 0.4 ? 'warn' : 'ok';
+const distStatus = (d) => d == null ? 'info' : d < 1    ? 'crit' : d < 5    ? 'warn' : 'ok';
+const confStatus = (c) => c == null ? 'info' : c >= 0.85 ? 'ok'  : c >= 0.6 ? 'warn' : 'crit';
+const fmtPct = (v) => v != null ? (v * 100).toFixed(1) + '%' : null;
+const fmtKm  = (v) => v != null ? v.toFixed(2) : null;
+const fmtTca = (v) => {
   if (v == null) return null;
-  const m = Math.floor(v);
-  const s = Math.round((v - m) * 60);
+  const m = Math.floor(v), s = Math.round((v - m) * 60);
   return `${m}m ${s}s`;
-}
+};
 
+// ── DataBlocksPanel ───────────────────────────────────────────────────────────
 export function DataBlocksPanel() {
-  const { metrics, lastUpdated } = useTelemetryStore();
+  const { metrics, lastUpdated, isReplay } = useTelemetryStore();
   const [secAgo, setSecAgo] = useState(null);
 
   useEffect(() => {
@@ -58,7 +56,17 @@ export function DataBlocksPanel() {
   return (
     <div className="ac-panel">
       <div className="ac-panel-header">
-        <span className="ac-panel-title">Derived Intelligence</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span className="ac-panel-title">Derived Intelligence</span>
+          {isReplay && (
+            <span style={{
+              fontSize: 9, color: '#3b82f6', border: '1px solid rgba(59,130,246,0.3)',
+              borderRadius: 2, padding: '1px 5px', letterSpacing: '0.1em', textTransform: 'uppercase',
+            }}>
+              Replay
+            </span>
+          )}
+        </div>
         {secAgo != null && (
           <span style={{ fontSize: 10, color: '#4b5563' }}>updated {secAgo}s ago</span>
         )}
@@ -69,12 +77,33 @@ export function DataBlocksPanel() {
           <div className="ac-no-data">Awaiting telemetry…</div>
         ) : (
           <>
-            <MetricCard label="Mission ID"              value={metrics.missionId}              status="info" />
-            <MetricCard label="Collision Probability"   value={fmtPct(metrics.collisionRisk)}  status={riskStatus(metrics.collisionRisk)}
-                        sub={metrics.collisionRisk >= 0.7 ? '⚠ MANEUVER WINDOW ACTIVE' : null} />
-            <MetricCard label="Min Distance"            value={fmtKm(metrics.distanceKm)}      unit="km"  status={distStatus(metrics.distanceKm)} />
-            <MetricCard label="Time to Closest Approach" value={fmtTca(metrics.tca)}           status={metrics.tca != null && metrics.tca < 10 ? 'crit' : 'info'} />
-            <MetricCard label="ML Confidence Score"     value={fmtPct(metrics.mlConfidence)}   status={confStatus(metrics.mlConfidence)} />
+            <MetricCard
+              label="Mission ID"
+              value={metrics.missionId}
+              status="info"
+            />
+            <MetricCard
+              label="Collision Probability"
+              value={fmtPct(metrics.collisionRisk)}
+              status={riskStatus(metrics.collisionRisk)}
+              sub={metrics.collisionRisk >= 0.7 ? '⚠ MANEUVER WINDOW ACTIVE' : null}
+            />
+            <MetricCard
+              label="Min Distance"
+              value={fmtKm(metrics.distanceKm)}
+              unit="km"
+              status={distStatus(metrics.distanceKm)}
+            />
+            <MetricCard
+              label="Time to Closest Approach"
+              value={fmtTca(metrics.tca)}
+              status={metrics.tca != null && metrics.tca < 10 ? 'crit' : 'info'}
+            />
+            <MetricCard
+              label="ML Confidence Score"
+              value={fmtPct(metrics.mlConfidence)}
+              status={confStatus(metrics.mlConfidence)}
+            />
           </>
         )}
       </div>

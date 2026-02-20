@@ -1,19 +1,21 @@
 import { create } from 'zustand';
 
 /**
- * telemetryStore — holds the *latest* derived metrics from the API.
+ * telemetryStore
  *
- * Terminal logs are intentionally NOT stored here; they go straight to the DOM
- * via useRef in TerminalBody to support hours-long sessions without memory
- * accumulation or React reconciliation overhead.
+ * Holds the latest metrics snapshot from the backend.
+ * Terminal logs go directly to the DOM — never stored here.
+ * This store is the single source of truth for DataBlocksPanel.
  */
 export const useTelemetryStore = create((set) => ({
-  metrics: null,
+  metrics:     null,
   lastUpdated: null,
+  isReplay:    false,   // true when replaying a history entry
 
-  setMetrics: (metrics) => set({ metrics }),
-  setLastUpdated: (ts) => set({ lastUpdated: ts }),
+  setMetrics:     (metrics) => set({ metrics, isReplay: false }),
+  setLastUpdated: (ts)      => set({ lastUpdated: ts }),
+  replayMetrics:  (metrics) => set({ metrics, isReplay: true, lastUpdated: new Date().toISOString() }),
 
-  /** Called when the active mission changes — wipe stale data immediately. */
-  clearMetrics: () => set({ metrics: null, lastUpdated: null }),
+  // Clear on mission switch or logout
+  clearMetrics: () => set({ metrics: null, lastUpdated: null, isReplay: false }),
 }));

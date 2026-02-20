@@ -1,25 +1,43 @@
 import { create } from 'zustand';
 
+const API_BASE = import.meta.env.VITE_ASTRAL_API ?? 'https://api.example.com/astral';
+
 /**
- * missionStore — tracks which mission is active + the mission catalogue.
+ * missionStore
  *
- * Keeping this tiny keeps re-renders surgical:
- *   - MissionSelector re-renders on `missions` change
- *   - Everything that cares about the active mission subscribes to `activeMission`
+ * Missions are user-scoped — fetched from the backend after login.
+ * MissionSelector only shows missions belonging to the logged-in user.
  */
-export const useMissionStore = create((set) => ({
-  activeMission: 'ASTRAL-M1',
+export const useMissionStore = create((set, get) => ({
+  activeMission: null,
+  missions:      [],
+  loading:       false,
+  error:         null,
 
-  missions: [
-    { id: 'ASTRAL-M1', label: 'ASTRAL-M1 — LEO Survey' },
-    { id: 'ASTRAL-M2', label: 'ASTRAL-M2 — GEO Transfer' },
-    { id: 'ASTRAL-M3', label: 'ASTRAL-M3 — Polar Monitor' },
-    { id: 'ASTRAL-M4', label: 'ASTRAL-M4 — Deep Recon' },
-  ],
+  // ── Fetch user's missions from backend ─────────────────────────────────────
+  fetchMissions: async (authHeader) => {
+    set({ loading: true, error: null });
+    try {
+      const res = await fetch(`${API_BASE}/missions`, {
+        credentials: 'include',
+        headers: { ...authHeader },
+        signal: AbortSignal.timeout(8000),
+      });
+      if (!res.ok) throw new Error(`Missions fetch failed: HTTP ${res.status}`);
+      const data = await res.json();
+      const missions = data.missions ?? [];
+      set({
+        missions,
+        activeMission: missions[0]?.id ?? null,
+        loading: false,
+      });
+    } catch (err) {
+      set({ error: err.message, loading: false });
+    }
+  },
 
-  /**
-   * Switch to a different mission.
-   * Callers are responsible for clearing the terminal buffer before calling.
-   */
   setActiveMission: (id) => set({ activeMission: id }),
+
+  // ── Clear on logout ────────────────────────────────────────────────────────
+  clear: () => set({ activeMission: null, missions: [], loading: false, error: null }),
 }));
